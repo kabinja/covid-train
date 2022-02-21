@@ -258,18 +258,12 @@ def run_fn(fn_args: tfx.components.FnArgs):
 
 eval_config = tfma.EvalConfig(
     model_specs=[
-        #tfma.ModelSpec(signature_name='eval')
+        #tfma.ModelSpec(signature_name='eval'),
         tfma.ModelSpec(label_key='R')
     ],
-    metrics_specs=[
-        tfma.MetricsSpec(
-            metrics=[
-                tfma.MetricConfig(class_name='MeanSquaredError'),
-                #tfma.MetricConfig(class_name='RSquare', module='tensorflow_addons.metrics')
-            ]
-        )
-    ],
+    metrics_specs =tfma.metrics.default_regression_specs(),
     slicing_specs=[
         tfma.SlicingSpec(),
-        #tfma.SlicingSpec(feature_keys=_SLICING_FEATURE_KEYS)
-    ])
+        tfma.SlicingSpec(feature_keys=_SLICING_FEATURE_KEYS)
+    ]
+)
