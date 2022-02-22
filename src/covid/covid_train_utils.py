@@ -67,7 +67,7 @@ ONE_HOT_FEATURES = {
 
 _LABEL_KEY = 'R'
 
-_SLICING_FEATURE_KEYS = ['CountryName']
+_SLICING_FEATURE_KEYS = ['region']
 
 _TRAIN_BATCH_SIZE = 20
 _EVAL_BATCH_SIZE = 10
@@ -269,12 +269,14 @@ eval_config = tfma.EvalConfig(
         tfma.MetricsSpec(
             metrics=[
                 tfma.MetricConfig(class_name='ExampleCount'),
-                tfma.MetricConfig(class_name='MeanSquaredError')
+                tfma.MetricConfig(class_name='MeanSquaredError',
+                 threshold=tfma.MetricThreshold(
+                     value_threshold=tfma.GenericValueThreshold(
+                         upper_bound={'value': 1000}),
+                     change_threshold=tfma.GenericChangeThreshold(
+                         direction=tfma.MetricDirection.LOWER_IS_BETTER,
+                         absolute={'value': -1e-10})))
             ],
-            thresholds = {
-                'MeanSquaredError': tfma.MetricThreshold(
-                    value_threshold = tfma.GenericValueThreshold(upper_bound={'value':1.0}))
-            }
         )
     ]
 )
