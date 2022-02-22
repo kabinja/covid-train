@@ -257,13 +257,24 @@ def run_fn(fn_args: tfx.components.FnArgs):
 
 
 eval_config = tfma.EvalConfig(
-    model_specs=[
+    model_specs = [
         #tfma.ModelSpec(signature_name='eval'),
         tfma.ModelSpec(label_key='R')
     ],
-    metrics_specs =tfma.metrics.default_regression_specs(),
-    slicing_specs=[
+    slicing_specs = [
         tfma.SlicingSpec(),
         tfma.SlicingSpec(feature_keys=_SLICING_FEATURE_KEYS)
+    ],
+    metrics_specs = [
+        tfma.MetricsSpec(
+            metrics=[
+                tfma.MetricConfig(class_name='ExampleCount'),
+                tfma.MetricConfig(class_name='MeanSquaredError')
+            ],
+            thresholds = {
+                'MeanSquaredError': tfma.MetricThreshold(
+                    value_threshold = tfma.GenericValueThreshold(upper_bound={'value':1.0}))
+            }
+        )
     ]
 )
