@@ -259,7 +259,11 @@ def run_fn(fn_args: tfx.components.FnArgs):
 eval_config = tfma.EvalConfig(
     model_specs = [
         #tfma.ModelSpec(signature_name='eval'),
-        tfma.ModelSpec(label_key='R')
+        tfma.ModelSpec(
+            signature_name="serving_default",
+            preprocessing_function_names=["transform_features"],
+            label_key='R'
+        )
     ],
     slicing_specs = [
         tfma.SlicingSpec(),
