@@ -136,7 +136,7 @@ def _make_keras_model(hyperparameters: keras_tuner.HyperParameters) -> tf.keras.
     return model
 
 
-def _make_serving_signatures(model, tf_transform_output: tft.TFTransformOutput):
+def _make_serving_signatures(model: tf.keras.Model, tf_transform_output: tft.TFTransformOutput):
     model.tft_layer = tf_transform_output.transform_features_layer()
 
     @tf.function(input_signature=[
@@ -150,9 +150,9 @@ def _make_serving_signatures(model, tf_transform_output: tft.TFTransformOutput):
         transformed_features = model.tft_layer(raw_features)
 
         outputs = model(transformed_features)
-        # TODO(b/154085620): Convert the predicted labels from the model using a
-        # reverse-lookup (opposite of transform.py).
-        return {'outputs': outputs}
+        transformed_features_spec = tf_transform_output.transformed_feature_spec()
+        raw_outputs = tf.subtract(tf.multiply(outputs,transformed_features_spec[_LABEL_KEY + '_var'][0]), transformed_features_spec[_LABEL_KEY + '_mean'][0])
+        return {'outputs': raw_outputs}
 
     @tf.function(input_signature=[
         tf.TensorSpec(shape=[None], dtype=tf.string, name='examples')
@@ -182,7 +182,15 @@ def preprocessing_fn(inputs):
         outputs[_transformed_name(key)] = _convert_num_to_one_hot(index, num_labels=dim + 1)
     for key in _DENSE_FLOAT_FEATURES:
         outputs[_transformed_name(key)] = tft.scale_to_z_score(_fill_in_missing(inputs[key]))
-    outputs[_transformed_name(_LABEL_KEY)] = tft.scale_to_z_score(_fill_in_missing(inputs[_LABEL_KEY]))
+    labels = _fill_in_missing(inputs[_LABEL_KEY])
+    batch_size = tf.shape(input=labels)[0]
+    
+    def feature_from_scalar(value):
+        return tf.tile(tf.expand_dims(value, 0), multiples=[batch_size])
+
+    outputs[_transformed_name(_LABEL_KEY)] = tft.scale_to_z_score(labels)
+    outputs[_LABEL_KEY + '_mean'] = feature_from_scalar(tft.mean(labels))
+    outputs[_LABEL_KEY + '_var'] = feature_from_scalar(tft.var(labels))
 
     return outputs
 
