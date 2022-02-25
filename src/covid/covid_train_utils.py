@@ -152,6 +152,7 @@ def _make_serving_signatures(model: tf.keras.Model, tf_transform_output: tft.TFT
         outputs = model(transformed_features)
         transformed_features_spec = tf_transform_output.transformed_feature_spec()
         raw_outputs = tf.subtract(tf.multiply(outputs,transformed_features_spec[_LABEL_KEY + '_var'][0]), transformed_features_spec[_LABEL_KEY + '_mean'][0])
+        print(raw_outputs)
         return {'outputs': raw_outputs}
 
     @tf.function(input_signature=[
